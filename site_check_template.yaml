@@ -1,0 +1,142 @@
+zabbix_export:
+  version: '5.4'
+  date: '2022-02-09T13:53:34Z'
+  groups:
+    -
+      uuid: 7df96b18c230490a9a0a9e2307226338
+      name: Templates
+  templates:
+    -
+      uuid: 8241f304fbdb493b820e485ec5cc498b
+      template: 'Zabbix Agent - Site Connection check'
+      name: 'Zabbix Agent - Site Connection check'
+      groups:
+        -
+          name: Templates
+      items:
+        -
+          uuid: ecf6505cf2c3434aa8c1f39bad7913cc
+          name: 'SITE.COM - Tracert'
+          key: 'tracert[site.com]'
+          delay: 3m
+          trends: '0'
+          value_type: TEXT
+          preprocessing:
+            -
+              type: STR_REPLACE
+              parameters:
+                - 'Request timed out.'
+                - 'Timeout,'
+            -
+              type: JAVASCRIPT
+              parameters:
+                - 'return value.replace(/ +/g, '','').trim()'
+            -
+              type: STR_REPLACE
+              parameters:
+                - \r\n
+                - ''
+            -
+              type: REGEX
+              parameters:
+                - 'T.*hops:.(.*),T'
+                - \1
+            -
+              type: JAVASCRIPT
+              parameters:
+                - 'return ''num,time1,time2,time3,ipadress\r\n'' + value'
+            -
+              type: STR_REPLACE
+              parameters:
+                - ',,'
+                - \r\n
+            -
+              type: STR_REPLACE
+              parameters:
+                - ',ms'
+                - ''
+            -
+              type: CSV_TO_JSON
+              parameters:
+                - ''
+                - ''
+                - '1'
+        -
+          uuid: 4d0158936c7048afbd3ea2fdd43670dd
+          name: 'SITE.COM - All Requests'
+          type: CALCULATED
+          key: 'web.page.all[http://www.site.com]'
+          params: 'count(/{HOST.HOST}/web.page.get[http://www.site.com],5m)'
+        -
+          uuid: b6b4648de5a14ed49b3b9ac64444c8f6
+          name: 'SITE.COM - Fail Requests'
+          type: CALCULATED
+          key: 'web.page.fail[http://www.site.com]'
+          params: 'count(/{HOST.HOST}/web.page.get[http://www.site.com],5m,"gt","305")'
+        -
+          uuid: 921ba6da444b48ec96d4b9c17e657de2
+          name: 'SITE.COM - Request Time'
+          key: 'web.page.perf[http://www.site.com]'
+          delay: 20s
+          value_type: FLOAT
+          units: s
+        -
+          uuid: a1adcf9476fc4d5fad24a3552198466d
+          name: 'SITE.COM - SLO'
+          type: CALCULATED
+          key: 'web.page.slo[http://www.site.com]'
+          units: '%'
+          params: '(count(/{HOST.HOST}/web.page.get[http://www.site.com],5m,"lt","305")/count(/{HOST.HOST}/web.page.get[http://www.site.com],5m))*100'
+          triggers:
+            -
+              uuid: e8feba9ad3104d0187d0baa285c05f99
+              expression: 'max(/Zabbix Agent - Site Connection check/web.page.slo[http://www.site.com],5m)<50'
+              name: 'SITE.COM: SLO < 50%'
+              priority: HIGH
+      discovery_rules:
+        -
+          uuid: f81c0ac74ec0496d9a81d5336bce8d31
+          name: 'SITE.CHECK - Tracert'
+          type: DEPENDENT
+          key: site.check.tracert
+          delay: '0'
+          item_prototypes:
+            -
+              uuid: 4af354a6c9534ec8868d494f2d6c11ac
+              name: 'SITE.COM - Hop {#NUM}. Request IP: {#IPADR}. Time 1'
+              type: DEPENDENT
+              key: 'time.site.com[{#NUM},{#IPADR}]'
+              delay: '0'
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$.[?(@.num == ''{#NUM}'')]'
+                -
+                  type: JAVASCRIPT
+                  parameters:
+                    - |
+                      sum = 0;
+                      test = JSON.parse(value);
+                      sum = parseInt(test[0].time1) + parseInt(test[0].time2) + parseInt(test[0].time3)
+                      return(sum/3);
+                -
+                  type: STR_REPLACE
+                  parameters:
+                    - NaN
+                    - '0'
+              master_item:
+                key: 'tracert[site.com]'
+          master_item:
+            key: 'tracert[site.com]'
+          preprocessing:
+            -
+              type: STR_REPLACE
+              parameters:
+                - ipadress
+                - '{#IPADR}'
+            -
+              type: STR_REPLACE
+              parameters:
+                - num
+                - '{#NUM}'
