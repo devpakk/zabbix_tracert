@@ -1,10 +1,18 @@
-- 👋 Hi, I’m @devpakk
-- 👀 I’m interested in ...
-- 🌱 I’m currently learning ...
-- 💞️ I’m looking to collaborate on ...
-- 📫 How to reach me ...
+Zabbix template that allows you to monitor the availability of a resource using Zabbix Agent (Windows).
 
-<!---
-devpakk/devpakk is a ✨ special ✨ repository because its `README.md` (this file) appears on your GitHub profile.
-You can click the Preview link to take a look at your changes.
---->
+Purpose: 
+To control the availability of a resource from different points (computers). Make a trace to the resource and plot the response time of each Hop.
+
+Received values:
+1. Resource response time
+2. Response code
+3. Number of Hops
+4. Hop Response Time Graph
+
+Configuration:
+1. Add the line to zabbix_agentd.conf or zabbix_agent2.conf:
+    UserParameter=tracert[*], powershell -File "C:\Zabbix\tracer.ps1" $1
+2. Increase Timeout on Server and Client to 30 seconds (zabbix_agentd.conf or zabbix_agent2.conf, on server zabbix_server.conf)
+    Timeout=30
+3. Move tracer.ps1 to C:\Zabbix\
+4. Import template to Zabbix
