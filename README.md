@@ -8,6 +8,7 @@ Received values:
 2. Response code
 3. Number of Hops
 4. Hop Response Time Graph
+5. Resource Availability SLO
 
 Configuration:
 1. Add the line to zabbix_agentd.conf or zabbix_agent2.conf:
@@ -16,3 +17,4 @@ Configuration:
     Timeout=30
 3. Move tracer.ps1 to C:\Zabbix\
 4. Import template to Zabbix
+5. After exporting to Zabbix, change the SITE.COM to your resource in the template.
